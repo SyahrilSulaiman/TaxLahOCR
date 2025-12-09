@@ -13,6 +13,33 @@ import tempfile
 app = Flask(__name__)
 CORS(app)
 
+# Initialize extractor
+extractor = None
+
+@app.before_request
+def init_extractor():
+    """Initialize extractor on first request"""
+    global extractor
+    if extractor is None:
+        extractor = MalaysianReceiptExtractor()
+
+@app.route('/')
+def index():
+    """Root endpoint"""
+    return jsonify({
+        'name': 'Malaysian Receipt OCR API',
+        'version': '1.0.0',
+        'endpoints': {
+            'health': '/health',
+            'extract': '/extract (POST)'
+        }
+    })
+
+@app.route('/health')
+def health():
+    """Health check endpoint"""
+    return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
+
 class MalaysianReceiptExtractor:
     """Extract data from Malaysian receipts"""
     
@@ -760,12 +787,6 @@ def index():
             '/health': 'GET - Check API health'
         }
     })
-
-
-@app.route('/health')
-def health():
-    """Health check endpoint"""
-    return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
 
 
 @app.route('/extract', methods=['POST'])
