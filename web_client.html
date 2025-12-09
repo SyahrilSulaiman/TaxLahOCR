@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/heic2any@0.0.4/dist/index.js"></script>
     <title>Malaysian Receipt Scanner</title>
     <style>
         * {
@@ -337,15 +338,27 @@
 
             selectedFile = file;
             
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImage.src = e.target.result;
-                previewImage.style.display = 'block';
-                previewText.style.display = 'none';
+            // Check if file is HEIC/HEIF format
+            const isHeic = file.name.toLowerCase().endsWith('.heic') || 
+                          file.name.toLowerCase().endsWith('.heif');
+            
+            if (isHeic) {
+                // For HEIC files, show a message that they'll be converted on the server
+                previewImage.style.display = 'none';
+                previewText.textContent = '📱 HEIC file selected\n\n(Will be converted to JPG on the server)';
+                previewText.style.display = 'block';
                 extractBtn.disabled = false;
-            };
-            reader.readAsDataURL(file);
+            } else {
+                // For other formats, show preview in browser
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                    previewText.style.display = 'none';
+                    extractBtn.disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
         }
 
         // Extract button click
@@ -364,7 +377,7 @@
                 const formData = new FormData();
                 formData.append('image', selectedFile);
 
-                const response = await fetch('http://192.168.100.104:8000/extract', {
+                const response = await fetch('https://dev.taxlah.com/extract', {
                     method: 'POST',
                     body: formData
                 });
