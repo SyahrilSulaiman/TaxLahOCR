@@ -806,10 +806,13 @@ def extract_receipt():
     
     except Exception as e:
         import traceback
+        error_msg = str(e)
+        tb = traceback.format_exc()
+        print(f"ERROR in /extract: {error_msg}\n{tb}")  # Log for debugging
         return jsonify({
             'success': False,
-            'error': str(e),
-            'traceback': traceback.format_exc()
+            'error': error_msg,
+            'traceback': tb
         }), 500
 
 
