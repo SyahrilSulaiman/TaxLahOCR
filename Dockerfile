@@ -21,11 +21,12 @@ RUN pip install --no-cache-dir gunicorn
 COPY app.py .
 
 # Expose port
-EXPOSE 8000
+EXPOSE 8080
 
 # Set environment variables
 ENV FLASK_APP=app.py
 ENV PYTHONUNBUFFERED=1
+ENV PORT=8080
 
 # Run with Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "--timeout", "120", "app:app"]
