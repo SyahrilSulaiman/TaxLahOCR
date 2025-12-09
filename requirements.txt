@@ -1,0 +1,12 @@
+# Flask==3.0.0
+# flask-cors==4.0.0
+# Pillow==10.1.0
+# pytesseract==0.3.10
+# python-dateutil==2.8.2
+
+Flask==3.0.0
+flask-cors==4.0.0
+Pillow>=10.3.0
+pytesseract==0.3.10
+python-dateutil==2.8.2
+pillow-heif

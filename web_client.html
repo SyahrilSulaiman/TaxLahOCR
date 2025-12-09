@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malaysian Receipt Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .upload-box {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+
+        .upload-box:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-box.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .preview-box {
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 300px;
+            background: #f9f9f9;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .results-section {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+
+        .result-card {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+        }
+
+        .result-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .result-item {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .result-value {
+            color: #333;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .items-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .items-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .items-table tr:hover {
+            background: #f0f2ff;
+        }
+
+        .amount-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 1.1em;
+        }
+
+        .amount-row.total {
+            border-top: 2px solid #667eea;
+            font-weight: bold;
+            font-size: 1.3em;
+            color: #667eea;
+            margin-top: 10px;
+            padding-top: 15px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffe0e0;
+            color: #cc0000;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #cc0000;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧾 Malaysian Receipt Scanner</h1>
+            <p>Upload your receipt and extract all the data automatically</p>
+        </div>
+
+        <div class="content">
+            <div class="upload-section">
+                <div class="upload-box" id="uploadBox">
+                    <div class="upload-icon">📸</div>
+                    <h3>Click or Drag to Upload Receipt</h3>
+                    <p>Supports JPG, PNG, JPEG</p>
+                    <input type="file" id="imageInput" accept="image/*" />
+                </div>
+                <button class="btn" id="extractBtn" disabled>Extract Data</button>
+            </div>
+
+            <div class="preview-section">
+                <div class="preview-box">
+                    <h3>Receipt Preview</h3>
+                    <img id="previewImage" class="preview-image" style="display: none;" />
+                    <p id="previewText" style="text-align: center; padding: 50px; color: #999;">No image selected</p>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Extracting data from receipt...</p>
+                </div>
+
+                <div id="errorContainer"></div>
+
+                <div id="resultsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadBox = document.getElementById('uploadBox');
+        const imageInput = document.getElementById('imageInput');
+        const extractBtn = document.getElementById('extractBtn');
+        const previewImage = document.getElementById('previewImage');
+        const previewText = document.getElementById('previewText');
+        const resultsSection = document.getElementById('resultsSection');
+        const loading = document.getElementById('loading');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const errorContainer = document.getElementById('errorContainer');
+
+        let selectedFile = null;
+
+        // Upload box click
+        uploadBox.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        // File input change
+        imageInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Drag and drop
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        });
+
+        uploadBox.addEventListener('dragleave', () => {
+            uploadBox.classList.remove('dragover');
+        });
+
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Please select a valid image file');
+                return;
+            }
+
+            selectedFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                previewText.style.display = 'none';
+                extractBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Extract button click
+        extractBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            resultsSection.style.display = 'block';
+            loading.classList.add('active');
+            resultsContainer.innerHTML = '';
+            errorContainer.innerHTML = '';
+            extractBtn.disabled = true;
+
+            console.log("Log File : ", selectedFile)
+
+            try {
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+
+                const response = await fetch('http://192.168.100.104:8000/extract', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                loading.classList.remove('active');
+                extractBtn.disabled = false;
+
+                if (result.success) {
+                    displayResults(result.data);
+                } else {
+                    showError(result.error || 'Failed to extract data');
+                }
+            } catch (error) {
+                loading.classList.remove('active');
+                extractBtn.disabled = false;
+                showError('Network error: ' + error.message);
+            }
+        });
+
+        function showError(message) {
+            errorContainer.innerHTML = `<div class="error">❌ ${message}</div>`;
+        }
+
+        function displayResults(data) {
+            let html = '';
+
+            // Merchant Info
+            html += `
+                <div class="result-card">
+                    <h3>📍 Merchant Information</h3>
+                    <div class="result-item">
+                        <div class="result-label">Name:</div>
+                        <div class="result-value">${data.merchant.name || '-'}</div>
+                    </div>
+                    ${data.merchant.registration_number ? `
+                    <div class="result-item">
+                        <div class="result-label">Registration No:</div>
+                        <div class="result-value">${data.merchant.registration_number}</div>
+                    </div>` : ''}
+                    ${data.merchant.address ? `
+                    <div class="result-item">
+                        <div class="result-label">Address:</div>
+                        <div class="result-value">${data.merchant.address}</div>
+                    </div>` : ''}
+                    ${data.merchant.phone ? `
+                    <div class="result-item">
+                        <div class="result-label">Phone:</div>
+                        <div class="result-value">${data.merchant.phone}</div>
+                    </div>` : ''}
+                </div>
+            `;
+
+            // Receipt Info
+            html += `
+                <div class="result-card">
+                    <h3>📄 Receipt Information</h3>
+                    ${data.receipt.number ? `
+                    <div class="result-item">
+                        <div class="result-label">Receipt No:</div>
+                        <div class="result-value">${data.receipt.number}</div>
+                    </div>` : ''}
+                    ${data.receipt.date ? `
+                    <div class="result-item">
+                        <div class="result-label">Date:</div>
+                        <div class="result-value">${data.receipt.date}</div>
+                    </div>` : ''}
+                    ${data.receipt.time ? `
+                    <div class="result-item">
+                        <div class="result-label">Time:</div>
+                        <div class="result-value">${data.receipt.time}</div>
+                    </div>` : ''}
+                    <div class="result-item">
+                        <div class="result-label">Payment Method:</div>
+                        <div class="result-value">💳 ${data.payment_method}</div>
+                    </div>
+                </div>
+            `;
+
+            // Items
+            if (data.items && data.items.length > 0) {
+                html += `
+                    <div class="result-card">
+                        <h3>🛒 Items</h3>
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Item</th>
+                                    <th style="text-align: right;">Price (RM)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                data.items.forEach((item, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.name}</td>
+                            <td style="text-align: right;">${item.total_price}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            // Amounts
+            const amounts = data.amounts;
+            html += `
+                <div class="result-card">
+                    <h3>💰 Amount Breakdown</h3>
+            `;
+
+            if (amounts.subtotal) {
+                html += `<div class="amount-row"><span>Subtotal:</span><span>RM ${amounts.subtotal}</span></div>`;
+            }
+            
+            if (amounts.service_charge) {
+                const rate = amounts.service_charge_rate ? ` (${amounts.service_charge_rate}%)` : '';
+                html += `<div class="amount-row"><span>Service Charge${rate}:</span><span>RM ${amounts.service_charge}</span></div>`;
+            }
+            
+            if (amounts.sst) {
+                const rate = amounts.sst_rate ? ` (${amounts.sst_rate}%)` : '';
+                html += `<div class="amount-row"><span>SST${rate}:</span><span>RM ${amounts.sst}</span></div>`;
+            }
+            
+            if (amounts.total) {
+                html += `<div class="amount-row total"><span>TOTAL:</span><span>RM ${amounts.total}</span></div>`;
+            }
+            
+            if (amounts.cash) {
+                html += `<div class="amount-row" style="margin-top: 15px;"><span>Cash:</span><span>RM ${amounts.cash}</span></div>`;
+            }
+            
+            if (amounts.change) {
+                html += `<div class="amount-row"><span>Change:</span><span>RM ${amounts.change}</span></div>`;
+            }
+
+            html += `</div>`;
+
+            resultsContainer.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
